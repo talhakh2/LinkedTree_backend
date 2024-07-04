@@ -10,6 +10,10 @@ const gameManagement = new mongoose.Schema(
             type: String,
             default: ''
         },
+        resturantAddress: {
+            type: String,
+            default: ''
+        },
         brandName: {
             type: String,
             default: ''

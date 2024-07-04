@@ -4,7 +4,7 @@ import { completePayment, monthlySessionCheckout, yearlySessionCheckout } from '
 const StripeCheckout = express.Router();
 
 StripeCheckout.route('/monthly').get(monthlySessionCheckout)
-StripeCheckout.route('/yearly').get(yearlySessionCheckout)
+StripeCheckout.route('/yearly/').get(yearlySessionCheckout)
 StripeCheckout.route('/success').get(completePayment)
 // RegisterationRoutes.route('/verify/:id').patch(verifyUser)
 

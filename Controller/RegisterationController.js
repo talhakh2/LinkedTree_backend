@@ -14,9 +14,39 @@ async function sendVerificationEmail(email, id){
         from: 'Onboarding <onboarding@ffsboyswah.com>',
         to: `${email}`,
         subject: 'Onboarding Verficiation Email Linkedtree',
-        html: `<p>Thanks for Registering you can verify by clicking the below Link <br/> <strong> <a href="http://195.200.14.117/verify?id=${id}">http://195.200.14.117/verify?id=${id}</a></strong>!</p>`
+        html: `<p>Thanks for Registering you can verify by clicking the below Link <br/> <strong> <a href="${process.env.BASE_URL}/verify?id=${id}">${process.env.BASE_URL}/verify?id=${id}</a></strong>!</p>`
     });
 }
+
+const sendDemoEmail = async ({ from, subject, body, restaurantName, owner }) => {
+    try {
+        await resend.emails.send({
+            from: 'Onboarding <onboarding@ffsboyswah.com>',
+            cc: from,
+            to: "talha.kh58@gmail.com", // admin email
+            subject,
+            html: `<h4>Owner Name: ${owner}</h4><h4>Restaurant Name: ${restaurantName}</h4><p>${body}</p>`
+        });
+        console.info('Email successfully sent.');
+    } catch (error) {
+        console.error('Error sending email:', error);
+        throw new Error('Email sending failed');
+    }
+};
+
+export const sendDemoRequest = async (req, res) => {
+    try {
+        const { email, subject, body, restaurantName, owner } = req.body;
+        
+        await sendDemoEmail({ from: email, subject, body, restaurantName, owner });
+
+        res.status(200).json({ message: 'Email sent successfully' });
+    } catch (error) {
+        console.error('Internal server error:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
 
 export const RegisterUser = async (req, res) => {
     try {
@@ -88,7 +118,7 @@ export const login = async (req, res) => {
         user.lastLogin = new Date();
         await user.save();
         const token = jwt.sign({ userId: user._id }, process.env.ENCRYPTION_SECRET, { expiresIn: '1d' });
-        return res.status(200).json({ message: 'Login successful', token, isVerified: user.isVerified, payment: user.paymentDone, userId: user._id, name: user.name, accountType: 'main', isTrial: user.isTrial, ownerId: null });
+        return res.status(200).json({ message: 'Login successful', token, isVerified: user.isVerified, payment: user.paymentDone, userId: user._id, name: user.name, accountType: 'main', isTrial: user.isTrial, blocked: user.blocked, ownerId: null });
     } catch (err) {
         return res.status(400).json({
             status: "failed",
@@ -223,13 +253,47 @@ export const updateTrialUser = async (req, res) => {
     }
 }
 
+export const manageUser = async (req, res) => {
+    const { id, action } = req.params;
+
+    try {
+        if (!id) 
+            return res.status(400).json({ status: "failed", message: "id is required" });
+        const isBlocked = action === 'block' ? true : action === 'unblock' ? false : null;
+        if (isBlocked === null) 
+            return res.status(400).json({ status: "failed", message: "Invalid action" });
+        const user = await Registration.findByIdAndUpdate(id, { blocked: isBlocked }, { new: true });
+        if (!user) 
+            return res.status(404).json({ status: "failed", message: "User not found" });
+        return res.status(200).json(user);
+    } catch (err) {
+        console.error('Error managing user:', err);
+        return res.status(500).json({ status: "failed", message: "Internal server error" });
+    }
+};
+
+export const unblockUser = async (req, res) => {
+    const { id } = req.params;
+    try {
+        if (!id) 
+            return res.status(400).json({ status: "failed", message: "id is required" });
+        const user = await Registration.findByIdAndUpdate(id, { blocked: false }, { new: true });
+        if (!user) 
+            return res.status(404).json({ status: "failed", message: "User not found" });
+        return res.status(200).json(user);
+    } catch (err) {
+        console.error('Error blocking user:', err);
+        return res.status(500).json({ status: "failed", message: "Internal server error" });
+    }
+};
+
 export const updateUserData = async (req, res) => {
     const id = req.params.id;
     try {
         if (!id) {
             throw new Error('id is required');
         }
-        const user = await Registration.findByIdAndUpdate(id, req.body, { new: true });
+        const user = await Registration.findByIdAndUpdate(id, req.body, { blocked: true });
         return res.status(200).json(user);
     } catch (err) {
         return res.status(400).json({

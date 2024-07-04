@@ -27,38 +27,50 @@ const getGameFormat = () => {
 
 export const createLandingPage = async (req, res) => {
     try {
-        console.log(req.body)
+        console.log(req.body);
         const userData = await Registration.findById(req.body.gameFormat.ownerId);
+
+        if (!userData) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
         if (userData.isTrial) {
             if (userData.isTrialVerified) {
-                const totalLaningPages = await Game.find({ ownerId: req.body.gameFormat.ownerId });
-                if (totalLaningPages.length > 1) {
-                    throw new Error("You can only have one landing page");
+                const totalLandingPages = await Game.find({ ownerId: req.body.gameFormat.ownerId });
+                console.log(totalLandingPages);
+
+                if (totalLandingPages.length >= 1) {
+                    return res.status(400).json({ message: "You can only have one landing page during the trial period" });
                 }
             } else {
-                throw new Error("Please Verify Your Trial");
+                return res.status(400).json({ message: "Please verify your trial" });
             }
         } else {
             if (userData.paymentDone) {
-                const date = userData.expiryDate;
-                if (date < Date.now()) {
-                    throw new Error("Please Renew Your Subscription");
+                const expiryDate = new Date(userData.expiryDate);
+
+                if (expiryDate < new Date()) {
+                    return res.status(400).json({ message: "Please renew your subscription" });
                 } else {
-                    const totalLaningPages = await Game.find({ ownerId: req.body.gameFormat.ownerId });
-                    if (totalLaningPages.length > 10) {
-                        throw new Error("You can only create 10 landing pages");
+                    const totalLandingPages = await Game.find({ ownerId: req.body.gameFormat.ownerId });
+
+                    if (totalLandingPages.length >= userData.landingPages) {
+                        return res.status(400).json({ message: `You can only create ${userData.landingPages} landing pages` });
                     }
                 }
             } else {
-                throw new Error("Please Pay Your Subscription");
+                return res.status(400).json({ message: "Please pay your subscription" });
             }
         }
+
         const data = await Game.create(req.body.gameFormat);
-        res.status(200).json(data);
+        return res.status(200).json(data);
     } catch (err) {
-        res.status(400).json({ message: err.message });
+        console.error('Error creating landing page:', err);
+        return res.status(500).json({ message: "Internal server error" });
     }
-}
+};
+
 
 export const getALLLandingPages = async (req, res) => {
     try {

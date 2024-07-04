@@ -24,17 +24,40 @@ app.use('/checkout', StripeCheckout);
 app.use('/game', GameRoutes);
 app.use('/review', reviewRoutes);
 app.use('/payment/history', paymentHistoryRoutes);
+
 app.post('/result', async (req, res) => {
-    const data = await resend.emails.send({
-        from: 'Gift Card <linkedtree@ffsboyswah.com>',
-        to: `${req.body.email}`,
-        subject: 'Onboarding Verficiation Email Linkedtree',
-        html: `<p>Congratulation on Winning ${req.body.selectedGift}. <br/> ${req.body.message}</p>`
-    });
-    res.status(200).json({
-        status: "success",
-    })
+    try {
+        await resend.emails.send({
+            from: 'Gift Card <onboarding@ffsboyswah.com>',
+            to: `${req.body.email}`,
+            subject: `Bravo ! vous avez reçu un cadeau de ${req.body.resturantName}`,
+            html: `<div class="container">
+                        <div class="content">
+                            <p>Bravo, vous avez gagné ${req.body.selectedGift}!</p>
+                            <p>Pour bénéficier pleinement de votre cadeau, nous vous invitons à vous rendre à l'adresse suivante, à la date de votre choix, et de présenter ce mail: </p>
+                            <p><strong>${req.body.resturantName}</strong><br>
+                                        ${req.body.resturantAddress}</p>
+                            <p>Attention, votre cadeau n'est disponible que pendant une durée limitée de <strong>10 days</strong> jours à partir de demain ! Ne laissez pas cette occasion exceptionnelle vous échapper, saisissez-la dès maintenant et profitez-en au maximum! </p>
+                            <p>Un minimum d’achat de 10 € est requis pour récupérer le cadeau.</p>
+                        </div>
+                        <div class="footer">
+                            <p><strong>This is an automated message, please do not reply.</strong></p>
+                        </div>
+                    </div>`
+        });
+
+        res.status(200).json({
+            status: "success",
+            message: `Gift Card Sent to: ${req.body.email}`
+        })
+    } catch (err) {
+        console.error('Error sending email:', err);
+        throw new Error('Email sending failed');
+    }
 });
+
+
+
 
 app.use('*', (req, res) => {
     res.status(200).json({
@@ -44,6 +67,6 @@ app.use('*', (req, res) => {
 
 const PORT = process.env.PORT || 8080
 
-connectDB().then(()=>{
+connectDB().then(() => {
     app.listen(PORT, () => console.log(`Listening on port ${PORT}`))
 })

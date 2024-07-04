@@ -31,6 +31,10 @@ const registrationSchema = new mongoose.Schema(
             type: Boolean,
             default: false
         },
+        landingPages: {
+            type: Number,
+            default: 0
+        },
         paymentType: {
             type: String,
             enum: ["Monthly", "Yearly", ""],
@@ -45,7 +49,8 @@ const registrationSchema = new mongoose.Schema(
             default: null
         },
         isTrial: {
-            type: Boolean
+            type: Boolean,
+            required: true
         },
         blocked: {
             type: Boolean,
