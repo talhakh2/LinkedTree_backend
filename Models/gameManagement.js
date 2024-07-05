@@ -88,6 +88,20 @@ const gameManagement = new mongoose.Schema(
                 default: 0
             }
         },
+        wheelColorPair: {
+            color1: {
+                type: String,
+                default: '#8497FC'
+            },
+            color2: {
+                type: String,
+                default: '#FDFDAF'
+            }
+        },
+        buttonColor: {
+            type: String,
+            default: '#8497FC'
+        },
         visitedMembers: {
             type: Number,
             default: 0

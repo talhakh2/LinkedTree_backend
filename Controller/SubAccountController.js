@@ -21,3 +21,24 @@ export const getAllOwnerAccounts = async (req, res) => {
         res.status(400).json({ message: err.message });
     }
 }
+
+export const deleteSubAccount = async (req, res) => {
+    try {
+        const { id } = req.params;
+        await SubAccountsModel.findByIdAndDelete(id);
+        res.status(200).json({ message: 'Sub-account deleted successfully' });
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+};
+
+export const updateSubAccount = async (req, res) => {
+    try {
+        const { subId } = req.params;
+        await SubAccountsModel.findByIdAndUpdate(subId, req.body.userData, { new: true });
+        res.status(200).json({ message: 'Sub-account updated successfully' });
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+};
+
