@@ -52,6 +52,10 @@ const registrationSchema = new mongoose.Schema(
             type: Boolean,
             required: true
         },
+        isToggle: {
+            type: Boolean,
+            default: true
+        },
         blocked: {
             type: Boolean,
             default: false
@@ -59,6 +63,10 @@ const registrationSchema = new mongoose.Schema(
         accountType: {
             type: String,
             default: 'main'
+        },
+        isAdmin: {
+            type: Boolean,
+            default: false
         },
         isTrialVerified: {
             type: Boolean,

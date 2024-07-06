@@ -27,17 +27,19 @@ const getGameFormat = () => {
 
 export const createLandingPage = async (req, res) => {
     try {
-        console.log(req.body);
         const userData = await Registration.findById(req.body.gameFormat.ownerId);
 
         if (!userData) {
             return res.status(404).json({ message: "User not found" });
         }
 
+        if (!userData.isToggle){
+            return res.status(400).json({ message: "You are restricted from admin to create landing page" });
+        }
+
         if (userData.isTrial) {
             if (userData.isTrialVerified) {
                 const totalLandingPages = await Game.find({ ownerId: req.body.gameFormat.ownerId });
-                console.log(totalLandingPages);
 
                 if (totalLandingPages.length >= 1) {
                     return res.status(400).json({ message: "You can only have one landing page during the trial period" });

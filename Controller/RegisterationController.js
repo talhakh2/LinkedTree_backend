@@ -105,20 +105,21 @@ export const login = async (req, res) => {
             const subAccountUser = await SubAccountsModel.findOne({ email });
             if (subAccountUser) {
                 const token = jwt.sign({ userId: subAccountUser._id }, process.env.ENCRYPTION_SECRET, { expiresIn: '1d' });
-                return res.status(200).json({ message: 'Login successful', token, isVerified: true, payment: true, userId: subAccountUser._id, name: subAccountUser.name, accountType: 'sub', ownerId: subAccountUser.ownerId });
+                return res.status(200).json({ message: 'Login successful', token, isVerified: true, payment: true, userId: subAccountUser._id, name: subAccountUser.name, accountType: 'sub', ownerId: subAccountUser.ownerId, isAdmin: false });
             }
             throw new Error('Invalid email or password');
         }
         if (user.password !== password) {
             throw new Error('Invalid email or password');
         }
+        console.log(user.isVerified);
         if (!user.isVerified) {
             await sendVerificationEmail(user.email, user._id);
         }
         user.lastLogin = new Date();
         await user.save();
         const token = jwt.sign({ userId: user._id }, process.env.ENCRYPTION_SECRET, { expiresIn: '1d' });
-        return res.status(200).json({ message: 'Login successful', token, isVerified: user.isVerified, payment: user.paymentDone, userId: user._id, name: user.name, accountType: 'main', isTrial: user.isTrial, blocked: user.blocked, ownerId: null });
+        return res.status(200).json({ message: 'Login successful', token, isVerified: user.isVerified, payment: user.paymentDone, userId: user._id, name: user.name, accountType: 'main', isTrial: user.isTrial, blocked: user.blocked, ownerId: null, isAdmin: user.isAdmin  });
     } catch (err) {
         return res.status(400).json({
             status: "failed",
@@ -272,17 +273,17 @@ export const manageUser = async (req, res) => {
     }
 };
 
-export const unblockUser = async (req, res) => {
-    const { id } = req.params;
+export const manageToggle = async (req, res) => {
+    const { id, action } = req.params;
     try {
         if (!id) 
             return res.status(400).json({ status: "failed", message: "id is required" });
-        const user = await Registration.findByIdAndUpdate(id, { blocked: false }, { new: true });
+        const user = await Registration.findByIdAndUpdate(id, { isToggle: action }, { new: true });
         if (!user) 
             return res.status(404).json({ status: "failed", message: "User not found" });
         return res.status(200).json(user);
     } catch (err) {
-        console.error('Error blocking user:', err);
+        console.error('Error managing user:', err);
         return res.status(500).json({ status: "failed", message: "Internal server error" });
     }
 };
