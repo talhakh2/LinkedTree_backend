@@ -10,12 +10,14 @@ import { Resend } from "resend"
 const resend = new Resend("re_55SZ9Msc_B795Z4pRmpKaN2pnhTbt1TfT");
 
 async function sendVerificationEmail(email, id){
+    console.log(email);
     const data = await resend.emails.send({
         from: 'Onboarding <onboarding@ffsboyswah.com>',
         to: `${email}`,
         subject: 'Onboarding Verficiation Email Linkedtree',
         html: `<p>Thanks for Registering you can verify by clicking the below Link <br/> <strong> <a href="${process.env.BASE_URL}/verify?id=${id}">${process.env.BASE_URL}/verify?id=${id}</a></strong>!</p>`
     });
+    console.log(data);
 }
 
 const sendDemoEmail = async ({ from, subject, body, restaurantName, owner }) => {
@@ -100,6 +102,7 @@ export const verifyUser = async (req, res) => {
 export const login = async (req, res) => {
     try {
         const { email, password } = req.query;
+
         const user = await Registration.findOne({ email });
         if (!user) {
             const subAccountUser = await SubAccountsModel.findOne({ email });
@@ -107,10 +110,11 @@ export const login = async (req, res) => {
                 const token = jwt.sign({ userId: subAccountUser._id }, process.env.ENCRYPTION_SECRET, { expiresIn: '1d' });
                 return res.status(200).json({ message: 'Login successful', token, isVerified: true, payment: true, userId: subAccountUser._id, name: subAccountUser.name, accountType: 'sub', ownerId: subAccountUser.ownerId, isAdmin: false });
             }
-            throw new Error('Invalid email or password');
+            return res.status(400).json({ message: 'Invaid email or password'})
         }
         if (user.password !== password) {
-            throw new Error('Invalid email or password');
+            console.log('invalid password');
+            return res.status(400).json({ message: 'Invaid password'})
         }
         console.log(user.isVerified);
         if (!user.isVerified) {
@@ -244,6 +248,7 @@ export const updateTrialUser = async (req, res) => {
         const user = await Registration.findById(id);
         user.isTrialVerified = true;
         await user.save();
+        console.log(user);
         await sendVerificationEmail(user.email, user._id);
         return res.status(200).json(user);
     } catch (err) {

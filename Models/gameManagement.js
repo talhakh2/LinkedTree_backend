@@ -89,6 +89,10 @@ const gameManagement = new mongoose.Schema(
             }
         },
         wheelColorPair: {
+            id: {
+                type: Number,
+                default: 1
+            },
             color1: {
                 type: String,
                 default: '#8497FC'
@@ -102,6 +106,11 @@ const gameManagement = new mongoose.Schema(
             type: String,
             default: '#8497FC'
         },
+        buttonColorID: {
+            type: Number,
+            default: 1
+        },
+
         visitedMembers: {
             type: Number,
             default: 0
@@ -139,6 +148,10 @@ const gameManagement = new mongoose.Schema(
             default: ''
         },
         twitter: {
+            type: String,
+            default: ''
+        },
+        followOrReview: {
             type: String,
             default: ''
         },

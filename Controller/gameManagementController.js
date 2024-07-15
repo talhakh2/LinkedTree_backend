@@ -1,29 +1,7 @@
 import Game from "../Models/gameManagement.js"
 import Registration from '../Models/RegisterationModel.js';
 
-const getGameFormat = () => {
-    const gameFormat = {
-        ownerId: '',
-        brandName: '',
-        logo: '',
-        options: {
-            option1: '',
-            option2: '',
-            option3: '',
-            option4: '',
-            option5: '',
-            option6: '',
-            option7: '',
-            option8: '',
-        },
-        instagram: '',
-        tiktok: '',
-        facebook: '',
-        googleMaps: '',
-        twitter: '',
-        content: '',
-    }
-}
+
 
 export const createLandingPage = async (req, res) => {
     try {
@@ -45,7 +23,7 @@ export const createLandingPage = async (req, res) => {
                     return res.status(400).json({ message: "You can only have one landing page during the trial period" });
                 }
             } else {
-                return res.status(400).json({ message: "Please verify your trial" });
+                return res.status(400).json({ message: "Please wait for adnin approval" });
             }
         } else {
             if (userData.paymentDone) {
