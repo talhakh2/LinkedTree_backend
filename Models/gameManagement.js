@@ -22,6 +22,10 @@ const gameManagement = new mongoose.Schema(
             type: String,
             default: ''
         },
+        expiryDate: {
+            type: Date,
+            default: null
+        },
         options: {
             option1: {
                 type: String,
@@ -133,23 +137,23 @@ const gameManagement = new mongoose.Schema(
         },
         instagram: {
             type: String,
-            default: ''
+            default: 'https://'
         },
         tiktok: {
             type: String,
-            default: ''
+            default: 'https://'
         },
         facebook: {
             type: String,
-            default: ''
+            default: 'https://'
         },
         googleMaps: {
             type: String,
-            default: ''
+            default: 'https://'
         },
         twitter: {
             type: String,
-            default: ''
+            default: 'https://'
         },
         followOrReview: {
             type: String,

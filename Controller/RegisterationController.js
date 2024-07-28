@@ -9,15 +9,13 @@ import { Resend } from "resend"
 
 const resend = new Resend("re_55SZ9Msc_B795Z4pRmpKaN2pnhTbt1TfT");
 
-async function sendVerificationEmail(email, id){
-    console.log(email);
+async function sendVerificationEmail(email, id) {
     const data = await resend.emails.send({
         from: 'Onboarding <onboarding@ffsboyswah.com>',
         to: `${email}`,
         subject: 'Onboarding Verficiation Email Linkedtree',
         html: `<p>Thanks for Registering you can verify by clicking the below Link <br/> <strong> <a href="${process.env.BASE_URL}/verify?id=${id}">${process.env.BASE_URL}/verify?id=${id}</a></strong>!</p>`
     });
-    console.log(data);
 }
 
 const sendDemoEmail = async ({ from, subject, body, restaurantName, owner }) => {
@@ -39,7 +37,7 @@ const sendDemoEmail = async ({ from, subject, body, restaurantName, owner }) => 
 export const sendDemoRequest = async (req, res) => {
     try {
         const { email, subject, body, restaurantName, owner } = req.body;
-        
+
         await sendDemoEmail({ from: email, subject, body, restaurantName, owner });
 
         res.status(200).json({ message: 'Email sent successfully' });
@@ -60,16 +58,17 @@ export const RegisterUser = async (req, res) => {
             name: req.body.name,
             email: req.body.email,
             password: req.body.password,
+            expiryDate: req.body.isTrial ? Date.now() + (30 * 24 * 60 * 60 * 1000) : null,
             isTrial: req.body.isTrial,
         });
-        if(req.body.isTrial){
+        if (req.body.isTrial) {
             await resend.emails.send({
                 from: 'Trial Confirmation <onboarding@ffsboyswah.com>',
                 to: `${req.body.email}`,
                 subject: 'Onboarding Verficiation Email Linkedtree',
                 html: `<p>Thanks for Registering. Your Trial is sent to admin for the verification. As soon as admin will verify your trial you will recieve a verification email.!</p>`
             });
-        }else{
+        } else {
             await sendVerificationEmail(req.body.email, registration._id);
         }
         await registration.save();
@@ -110,20 +109,18 @@ export const login = async (req, res) => {
                 const token = jwt.sign({ userId: subAccountUser._id }, process.env.ENCRYPTION_SECRET, { expiresIn: '1d' });
                 return res.status(200).json({ message: 'Login successful', token, isVerified: true, payment: true, userId: subAccountUser._id, name: subAccountUser.name, accountType: 'sub', ownerId: subAccountUser.ownerId, isAdmin: false });
             }
-            return res.status(400).json({ message: 'Invaid email or password'})
+            return res.status(400).json({ message: 'Invaid email' })
         }
         if (user.password !== password) {
-            console.log('invalid password');
-            return res.status(400).json({ message: 'Invaid password'})
+            return res.status(400).json({ message: 'Invaid password' })
         }
-        console.log(user.isVerified);
         if (!user.isVerified) {
             await sendVerificationEmail(user.email, user._id);
         }
         user.lastLogin = new Date();
         await user.save();
         const token = jwt.sign({ userId: user._id }, process.env.ENCRYPTION_SECRET, { expiresIn: '1d' });
-        return res.status(200).json({ message: 'Login successful', token, isVerified: user.isVerified, payment: user.paymentDone, userId: user._id, name: user.name, accountType: 'main', isTrial: user.isTrial, blocked: user.blocked, ownerId: null, isAdmin: user.isAdmin  });
+        return res.status(200).json({ message: 'Login successful', token, isVerified: user.isVerified, payment: user.paymentDone, userId: user._id, name: user.name, accountType: 'main', isTrial: user.isTrial, blocked: user.blocked, ownerId: null, isAdmin: user.isAdmin, expiryDate: user.expiryDate });
     } catch (err) {
         return res.status(400).json({
             status: "failed",
@@ -131,6 +128,54 @@ export const login = async (req, res) => {
         })
     }
 }
+
+// Route to request password reset
+export const forgotPass = async (req, res) => {
+    const { email } = req.body;
+    console.log(email);
+    try {
+        const user = await Registration.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Generate token
+        const token = jwt.sign({ userId: user._id }, process.env.ENCRYPTION_SECRET, { expiresIn: '1h' });
+
+        // Send email with reset link
+        const resetLink = `${process.env.BASE_URL}/reset-password/${token}`;
+        console.log(resetLink);
+        await resend.emails.send({
+            from: 'EGO <onboarding@ffsboyswah.com>',
+            to: email,
+            subject: 'Password Reset',
+            html: `<p>Click <a href="${resetLink}">here</a> to reset your password.</p>`
+        });
+
+        res.json({ message: 'Password reset email sent' });
+    } catch (error) {
+        res.status(500).json({ message: `Internal server error: ${error}` });
+    }
+};
+
+// Route to password reset
+export const resetPass = async (req, res) => {
+    const { token, newPassword } = req.body;
+    try {
+        const decoded = jwt.verify(token, process.env.ENCRYPTION_SECRET);
+        const user = await Registration.findById(decoded.userId);
+        if (!user) {
+            return res.status(404).json({ message: 'Invalid token or user not found' });
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        res.json({ message: 'Password reset successful' });
+    } catch (error) {
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
 
 
 export const sendEmail = async (req, res) => {
@@ -172,7 +217,7 @@ export const getUserData = async (req, res) => {
 
 export const getTrialUser = async (req, res) => {
     try {
-        const user = await Registration.find({isTrial: true, });
+        const user = await Registration.find({ isTrial: true, });
         return res.status(200).json(user);
     } catch (err) {
         return res.status(400).json({
@@ -263,13 +308,13 @@ export const manageUser = async (req, res) => {
     const { id, action } = req.params;
 
     try {
-        if (!id) 
+        if (!id)
             return res.status(400).json({ status: "failed", message: "id is required" });
         const isBlocked = action === 'block' ? true : action === 'unblock' ? false : null;
-        if (isBlocked === null) 
+        if (isBlocked === null)
             return res.status(400).json({ status: "failed", message: "Invalid action" });
         const user = await Registration.findByIdAndUpdate(id, { blocked: isBlocked }, { new: true });
-        if (!user) 
+        if (!user)
             return res.status(404).json({ status: "failed", message: "User not found" });
         return res.status(200).json(user);
     } catch (err) {
@@ -281,10 +326,10 @@ export const manageUser = async (req, res) => {
 export const manageToggle = async (req, res) => {
     const { id, action } = req.params;
     try {
-        if (!id) 
+        if (!id)
             return res.status(400).json({ status: "failed", message: "id is required" });
         const user = await Registration.findByIdAndUpdate(id, { isToggle: action }, { new: true });
-        if (!user) 
+        if (!user)
             return res.status(404).json({ status: "failed", message: "User not found" });
         return res.status(200).json(user);
     } catch (err) {
@@ -310,16 +355,16 @@ export const updateUserData = async (req, res) => {
 }
 
 export const getAdminDashboardData = async (req, res) => {
-    try{
+    try {
         const users = await Registration.find();
         const payments = await paymentModel.find();
         let total = 0;
-        for(const paymentData of payments){
+        for (const paymentData of payments) {
             total += paymentData.amount;
         }
 
         return res.status(200).json({
-            users: users.length -1 ,
+            users: users.length - 1,
             revenue: total
         });
     } catch (err) {

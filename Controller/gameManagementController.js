@@ -23,7 +23,7 @@ export const createLandingPage = async (req, res) => {
                     return res.status(400).json({ message: "You can only have one landing page during the trial period" });
                 }
             } else {
-                return res.status(400).json({ message: "Please wait for adnin approval" });
+                return res.status(400).json({ message: "Please wait for admin approval" });
             }
         } else {
             if (userData.paymentDone) {
@@ -43,7 +43,7 @@ export const createLandingPage = async (req, res) => {
             }
         }
 
-        const data = await Game.create(req.body.gameFormat);
+        const data = await Game.create({...req.body.gameFormat, expiryDate: userData.expiryDate});
         return res.status(200).json(data);
     } catch (err) {
         console.error('Error creating landing page:', err);

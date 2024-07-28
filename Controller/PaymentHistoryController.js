@@ -2,6 +2,8 @@ import { subDays, format } from 'date-fns';
 import paymentModel from "../Models/paymentHistoryModel.js"
 import Registration from '../Models/RegisterationModel.js';
 
+import Game from '../Models/gameManagement.js';
+
 // export const getPaymentHistory = async (req, res) => {
 //     const ownerId = req.params.id;
 //     try {
@@ -21,9 +23,11 @@ import Registration from '../Models/RegisterationModel.js';
 export const getPaymentHistory = async (req, res) => {
     const ownerId = req.params.id;
     try {
-        const [registrationData, paymentData] = await Promise.all([
+        const [registrationData, paymentData, landingPagesData, landingPagesCount] = await Promise.all([
             Registration.findById(ownerId),
-            paymentModel.find({ ownerId })
+            paymentModel.find({ ownerId }),
+            Game.find({ ownerId }),
+            Game.countDocuments({ ownerId }), // This counts the documents
         ]);
 
         const combinedData = paymentData.map(payment => ({
@@ -32,8 +36,11 @@ export const getPaymentHistory = async (req, res) => {
             plan: payment.plan,
             amount: payment.amount,
             paymentMethod: payment.paymentMethod,
-            expiryDate: registrationData ? registrationData.expiryDate : null,
-            landingPages: registrationData ? registrationData.landingPages : null
+            expiryDate: payment.expiryDate,
+            landingPages: payment.landingPages,
+            landingPagesCount: landingPagesCount ? landingPagesCount : 0,
+            expiryDateUser: registrationData ? registrationData.expiryDate : null,
+            // landingPages: registrationData ? registrationData.landingPages : null
         }));
 
         res.status(200).json({

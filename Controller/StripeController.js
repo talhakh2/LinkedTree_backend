@@ -1,8 +1,9 @@
 import Registration from '../Models/RegisterationModel.js';
+import Game from '../Models/gameManagement.js';
 import paymentModel from "../Models/paymentHistoryModel.js"
 import stripe from 'stripe';
 
-const stripeInstance = stripe("sk_test_51P8EJNBRuVDskNC70m3RMEJzm8HQBX7syEuW1aaz2mv8DXMF7jHvgQ83fKj60q2yzDVzkzXNqp4RQb9vObRJ8AQR002vovaMbU");
+const stripeInstance = stripe("sk_test_51P7LLsLwSbXuk7vlss14tXpYT1bpq93ocxlpn3J72HGpFqBQyjzprEc4RfdlTgUnvuRXYF7dK8I14te1reVkqafn00JTwjHRIC");
 
 export const monthlySessionCheckout = async (req, res) => {
     const session = await stripeInstance.checkout.sessions.create({
@@ -88,21 +89,39 @@ export const completePayment = async (req, res) => {
     user.paymentDone = true;
     user.paymentType = userData.plan;
     user.landingPages = userData.landingPages;
-
     user.paymentDate = Date.now();
+
+    if (user.isTrial){
+        user.isTrial = false 
+        user.isVerified = true
+    }
+    var expiryDate; 
     if(session.metadata.plan == "Yearly"){
         user.expiryDate = Date.now() + (365 * 24 * 60 * 60 * 1000);
+        expiryDate = user.expiryDate
     }else if(session.metadata.plan == "Monthly"){
         user.expiryDate = Date.now() + (30 * 24 * 60 * 60 * 1000);
+        expiryDate = user.expiryDate
     }
     await user.save();
+
+    const data = await Game.updateMany(
+        { ownerId: userData.userId },
+        { $set: { expiryDate: expiryDate } }
+    );
+
+    console.log('Update Result:', {
+        acknowledged: data.acknowledged,
+        matchedCount: data.matchedCount,
+        modifiedCount: data.modifiedCount
+    });
+
     const paymentData = {
         ownerId: userData.userId,
         plan: userData.plan,
         amount: session.amount_total / 100,
         landingPages: userData.landingPages,
-        
-        date: Date.now()
+        expiryDate: expiryDate
     }
     await paymentModel.create(paymentData);
     return res.json({

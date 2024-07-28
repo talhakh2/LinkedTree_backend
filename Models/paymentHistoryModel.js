@@ -15,7 +15,12 @@ const paymentHistorySchema = new mongoose.Schema(
             type: Number,
             default: 0
         },
-        date: {
+        landingPages: {
+            type: Number,
+            default: 0
+        },
+
+        expiryDate: {
             type: Date,
             default: null
         },
