@@ -40,7 +40,7 @@ app.post('/result', async (req, res) => {
                             <p><strong>${req.body.resturantName}</strong><br>
                                         ${req.body.resturantAddress}</p>
                             <p>Attention, votre cadeau n'est disponible que pendant une durée limitée de <strong>10 days</strong> jours à partir de demain ! Ne laissez pas cette occasion exceptionnelle vous échapper, saisissez-la dès maintenant et profitez-en au maximum! </p>
-                            <p>Un minimum d’achat de 10 € est requis pour récupérer le cadeau.</p>
+                            <p>Un minimum d’achat de <strong>€10</strong> est requis pour récupérer le cadeau.</p>
                         </div>
                         <div class="footer">
                             <p><strong>This is an automated message, please do not reply.</strong></p>

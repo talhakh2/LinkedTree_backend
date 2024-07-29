@@ -45,7 +45,8 @@ export const getPaymentHistory = async (req, res) => {
 
         res.status(200).json({
             status: "success",
-            data: combinedData
+            data: combinedData,
+            registrationData: registrationData
         });
     } catch (err) {
         res.status(400).json({

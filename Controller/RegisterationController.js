@@ -109,10 +109,10 @@ export const login = async (req, res) => {
                 const token = jwt.sign({ userId: subAccountUser._id }, process.env.ENCRYPTION_SECRET, { expiresIn: '1d' });
                 return res.status(200).json({ message: 'Login successful', token, isVerified: true, payment: true, userId: subAccountUser._id, name: subAccountUser.name, accountType: 'sub', ownerId: subAccountUser.ownerId, isAdmin: false });
             }
-            return res.status(400).json({ message: 'Invaid email' })
+            return res.status(400).json({ message: 'Invalid email' })
         }
         if (user.password !== password) {
-            return res.status(400).json({ message: 'Invaid password' })
+            return res.status(400).json({ message: 'Invalid password' })
         }
         if (!user.isVerified) {
             await sendVerificationEmail(user.email, user._id);
