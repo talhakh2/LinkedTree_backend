@@ -162,6 +162,10 @@ const gameManagement = new mongoose.Schema(
         content: {
             type: String,
             default: ''
+        },
+        toggle: {
+            type: Boolean,
+            default: true
         }
     },
     {

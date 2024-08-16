@@ -8,11 +8,11 @@ export const createLandingPage = async (req, res) => {
         const userData = await Registration.findById(req.body.gameFormat.ownerId);
 
         if (!userData) {
-            return res.status(404).json({ message: "User not found" });
+            return res.status(404).json({ message: "Utilisateur non trouvé" });
         }
 
-        if (!userData.isToggle){
-            return res.status(400).json({ message: "You are restricted from admin to create landing page" });
+        if (!userData.isToggle) {
+            return res.status(400).json({ message: "Vous êtes restreint par l'administrateur pour créer une page de destination" });
         }
 
         if (userData.isTrial) {
@@ -20,36 +20,37 @@ export const createLandingPage = async (req, res) => {
                 const totalLandingPages = await Game.find({ ownerId: req.body.gameFormat.ownerId });
 
                 if (totalLandingPages.length >= 1) {
-                    return res.status(400).json({ message: "You can only have one landing page during the trial period" });
+                    return res.status(400).json({ message: "Vous ne pouvez avoir qu'une seule page de destination pendant la période d'essai" });
                 }
             } else {
-                return res.status(400).json({ message: "Please wait for admin approval" });
+                return res.status(400).json({ message: "Veuillez attendre l'approbation de l'administrateur" });
             }
         } else {
             if (userData.paymentDone) {
                 const expiryDate = new Date(userData.expiryDate);
 
                 if (expiryDate < new Date()) {
-                    return res.status(400).json({ message: "Please renew your subscription" });
+                    return res.status(400).json({ message: "Veuillez renouveler votre abonnement" });
                 } else {
                     const totalLandingPages = await Game.find({ ownerId: req.body.gameFormat.ownerId });
 
                     if (totalLandingPages.length >= userData.landingPages) {
-                        return res.status(400).json({ message: `You can only create ${userData.landingPages} landing pages` });
+                        return res.status(400).json({ message: `Vous ne pouvez créer que ${userData.landingPages} pages de destination` });
                     }
                 }
             } else {
-                return res.status(400).json({ message: "Please pay your subscription" });
+                return res.status(400).json({ message: "Veuillez payer votre abonnement" });
             }
         }
 
-        const data = await Game.create({...req.body.gameFormat, expiryDate: userData.expiryDate});
+        const data = await Game.create({ ...req.body.gameFormat, expiryDate: userData.expiryDate });
         return res.status(200).json(data);
     } catch (err) {
-        console.error('Error creating landing page:', err);
-        return res.status(500).json({ message: "Internal server error" });
+        console.error('Erreur lors de la création de la page de destination:', err);
+        return res.status(500).json({ message: "Erreur interne du serveur" });
     }
 };
+
 
 
 export const getALLLandingPages = async (req, res) => {
@@ -111,4 +112,19 @@ export const updateLandingPage = async (req, res) => {
         res.status(400).json(err);
     }
 }
+
+export const manageToggle = async (req, res) => {
+    const { id, action } = req.params;
+    try {
+        if (!id)
+            return res.status(400).json({ status: "failed", message: "id is required" });
+        const game = await Game.findByIdAndUpdate(id, { toggle: action }, { new: true });
+        if (!game)
+            return res.status(404).json({ status: "failed", message: "game not found" });
+        return res.status(200).json(game);
+    } catch (err) {
+        console.error('Error managing user:', err);
+        return res.status(500).json({ status: "failed", message: "Internal server error" });
+    }
+};
 

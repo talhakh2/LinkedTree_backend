@@ -68,6 +68,15 @@ export const RegisterUser = async (req, res) => {
                 subject: 'Onboarding Verficiation Email Linkedtree',
                 html: `<p>Thanks for Registering. Your Trial is sent to admin for the verification. As soon as admin will verify your trial you will recieve a verification email.!</p>`
             });
+
+            const res = await resend.emails.send({
+                from: 'Trial Request <onboarding@ffsboyswah.com>',
+                to: `talha.kh58@gmail.com`,
+                subject: 'Onboarding Verficiation Email Linkedtree',
+                html: `<p>${req.body.email} is requesting a trial account and is waiting for your approval.</p>`
+            });
+            console.log(res);
+
         } else {
             await sendVerificationEmail(req.body.email, registration._id);
         }
@@ -241,7 +250,7 @@ export const getAllUsers = async (req, res) => {
             return {
                 ...itemObj,
                 pages: games.length,
-                access: games.some(game => game.isTrial) ? 'Trial' : (item.accountType === 'main' ? 'Owner' : 'Sub')
+                access: games.some(game => game.isTrial) ? 'Trial' : (item.accountType === 'main' ? 'Propriétaire' : 'Sous')
             };
         }));
 
